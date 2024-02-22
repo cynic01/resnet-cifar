@@ -68,6 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', default=2, type=int, help='number of dataloader workers')
     parser.add_argument('--optimizer', default='sgd', choices=('sgd', 'nesterov', 'adagrad', 'adadelta', 'adam'), help='optimizer to use')
     args = parser.parse_args()
+    print(args)
 
     device = 'cpu'
     if args.cuda:
@@ -110,6 +111,8 @@ if __name__ == '__main__':
         train(net, trainloader, optimizer, criterion, device)
         torch.cuda.synchronize()
     
+    dataload_times = []
+    training_times = []
     epoch_times = []
     for epoch in range(args.epoch):
         print(f'\nEpoch: {epoch+1}')
@@ -122,9 +125,14 @@ if __name__ == '__main__':
         if device == 'cuda':
             torch.cuda.synchronize()
         epoch_times.append(time.perf_counter() - epoch_start)
+        dataload_times.append(dataload_time)
+        training_times.append(training_time)
 
         print(f'Training loss: {loss}; Top-1 training accuracy: {acc}')
         print(f'Dataloading time: {dataload_time} sec; Training time: {training_time} sec; Epoch time: {epoch_times[-1]} sec')
     
-    print(f'Average running time over {args.epoch} epochs: {sum(epoch_times) / args.epoch}')
+    print(f'\n### Average over {args.epoch} epochs:')
+    print(f'Dataloading time: {sum(dataload_times) / args.epoch} sec')
+    print(f'Training time: {sum(training_times) / args.epoch} sec')
+    print(f'Epoch time: {sum(epoch_times) / args.epoch} sec')
 
