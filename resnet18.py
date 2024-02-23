@@ -14,21 +14,22 @@ import torch.nn.functional as F
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride=1, use_bn=True):
         super(BasicBlock, self).__init__()
+        self.use_bn = use_bn
         self.conv1 = nn.Conv2d(
             in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(planes) if use_bn else nn.Identity()
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
                                stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = nn.BatchNorm2d(planes) if use_bn else nn.Identity()
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion*planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, self.expansion*planes,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*planes)
+                nn.BatchNorm2d(self.expansion*planes) if use_bn else nn.Identity()
             )
 
     def forward(self, x):
@@ -40,24 +41,24 @@ class BasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, use_bn=True):
         super(ResNet, self).__init__()
         self.in_planes = 64
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.bn1 = nn.BatchNorm2d(64) if use_bn else nn.Identity()
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1, use_bn=use_bn)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2, use_bn=use_bn)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2, use_bn=use_bn)
+        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2, use_bn=use_bn)
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, stride):
+    def _make_layer(self, block, planes, num_blocks, stride, use_bn):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride))
+            layers.append(block(self.in_planes, planes, stride, use_bn=use_bn))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
@@ -73,5 +74,5 @@ class ResNet(nn.Module):
         return out
 
 
-def ResNet18():
-    return ResNet(BasicBlock, [2, 2, 2, 2])
+def ResNet18(use_bn=True):
+    return ResNet(BasicBlock, [2, 2, 2, 2], use_bn=use_bn)

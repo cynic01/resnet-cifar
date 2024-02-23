@@ -67,6 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', default='cifar10', help='name or path to training data')
     parser.add_argument('--num_workers', default=2, type=int, help='number of dataloader workers')
     parser.add_argument('--optimizer', default='sgd', choices=('sgd', 'nesterov', 'adagrad', 'adadelta', 'adam'), help='optimizer to use')
+    parser.add_argument('--no_bn', default=False, action='store_true', help='remove all batch norm layers')
     args = parser.parse_args()
     print(args)
 
@@ -89,15 +90,13 @@ if __name__ == '__main__':
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=args.num_workers)
 
-    # classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
     # Model
-    net = ResNet18().to(device)
+    net = ResNet18(use_bn = not args.no_bn).to(device)
 
     criterion = nn.CrossEntropyLoss()
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    elif args.optimizer == 'nestorov':
+    elif args.optimizer == 'nesterov':
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4, nesterov=True)
     elif args.optimizer == 'adagrad':
         optimizer = optim.Adagrad(net.parameters(), lr=args.lr, weight_decay=5e-4)
