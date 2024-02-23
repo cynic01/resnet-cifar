@@ -1,5 +1,7 @@
 # Train ResNet-18 model on CIFAR10 Dataset
 
+Packages needed: `torch`, `torchvision`, `tqdm` (for progress bar)
+
 To run all experiments, execute:
 ```
 python3 lab2.py
